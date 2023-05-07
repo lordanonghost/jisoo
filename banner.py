@@ -1,43 +1,54 @@
+
 import argparse
 import requests
-import socket
-parser = argparse.ArgumentParser(description='Web Domain Scanner')
-parser.add_argument('-t', '--target', help='Target domain name or IP address', required=True)
-parser.add_argument('-p', '--ports', help='Port numbers to scan (comma separated)', default='80,443')
-parser.add_argument('-ssl', '--ssl', help='Enable SSL/TLS', action='store_true')
-parser.add_argument('-v', '--verbose', help='Enable verbose output', action='store_true')
-args = parser.parse_args()
-def scan_ports(target, ports, use_ssl):
-    open_ports = []
-    for port in ports.split(','):
-        port = int(port.strip())
-        try:
-            if use_ssl:
-                url = 'https://' + target + ':' + str(port)
-                response = requests.get(url, verify=False, timeout=5)
-                if response.status_code == 200:
-                    open_ports.append(port)
-            else:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-                result = sock.connect_ex((target, port))
-                if result == 0:
-                    open_ports.append(port)
-                sock.close()
-        except:
-            pass
-    return open_ports
-if args.verbose:
-    print('Scanning target:', args.target)
+from bs4 import BeautifulSoup
 
-if args.ssl:
-    use_ssl = True
-else:
-    use_ssl = False
 
-open_ports = scan_ports(args.target, args.ports, use_ssl)
+def print_index_html(url):
+    response = requests.get(url)
+    html_content = response.text
 
-if open_ports:
-    print('Open ports:', open_ports)
-else:
-    print('No open ports found.')
+    print("Index.html Content:")
+    print(html_content)
+
+
+def print_scripts(url):
+    response = requests.get(url)
+    html_content = response.text
+
+    soup = BeautifulSoup(html_content, "html.parser")
+    script_tags = soup.find_all("script")
+
+    print("Scripts used in index.html:")
+    for script_tag in script_tags:
+        if script_tag.has_attr("src"):
+            script_url = script_tag["src"]
+            print(script_url)
+
+
+def domain_scan(url):
+    print(f"Scanning URL: {url}")
+    print_index_html(url)
+    print_scripts(url)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Website Domain Scan")
+    parser.add_argument("url", help="URL of the website to scan")
+    parser.add_argument("-i", "--index", action="store_true", help="Analyze index.html content")
+    parser.add_argument("-s", "--scripts", action="store_true", help="Analyze scripts used on the page")
+
+    args = parser.parse_args()
+
+    if args.index and args.scripts:
+        domain_scan(args.url)
+    elif args.index:
+        print_index_html(args.url)
+    elif args.scripts:
+        print_scripts(args.url)
+    else:
+        parser.print_help()
+
+# main function
+if __name__ == "__main__":
+    main()
