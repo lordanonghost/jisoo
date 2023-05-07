@@ -1,3 +1,4 @@
 argparse
 requests
 socket
+BeautifulSoup4
