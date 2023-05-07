@@ -1,51 +1,50 @@
 
 import argparse
 import requests
-from bs4 import BeautifulSoup
+import whois
 
 
-def print_index_html(url):
+def check_website_structure(url):
     response = requests.get(url)
-    html_content = response.text
+    status_code = response.status_code
 
-    print("Index.html Content:")
-    print(html_content)
+    print(f"Website Structure Check for: {url}")
+    print(f"Status Code: {status_code}")
 
 
-def print_scripts(url):
-    response = requests.get(url)
-    html_content = response.text
+def get_whois_info(domain):
+    w = whois.whois(domain)
 
-    soup = BeautifulSoup(html_content, "html.parser")
-    script_tags = soup.find_all("script")
-
-    print("Scripts used in index.html:")
-    for script_tag in script_tags:
-        if script_tag.has_attr("src"):
-            script_url = script_tag["src"]
-            print(script_url)
+    print("WHOIS Information:")
+    print(f"Domain Name: {w.domain_name}")
+    print(f"Registrar: {w.registrar}")
+    print(f"Creation Date: {w.creation_date}")
+    print(f"Expiration Date: {w.expiration_date}")
+    print(f"Name Servers: {w.name_servers}")
 
 
 def domain_scan(url):
     print(f"Scanning URL: {url}")
-    print_index_html(url)
-    print_scripts(url)
+    check_website_structure(url)
+    domain = url.split("//")[-1]
+    get_whois_info(domain)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Website Domain Scan")
     parser.add_argument("url", help="URL of the website to scan")
-    parser.add_argument("-i", "--index", action="store_true", help="Analyze index.html content")
-    parser.add_argument("-s", "--scripts", action="store_true", help="Analyze scripts used on the page")
+    parser.add_argument("-s", "--structure", action="store_true", help="Check website structure")
+    parser.add_argument("-w", "--whois", action="store_true", help="Get WHOIS information")
 
     args = parser.parse_args()
 
-    if args.index and args.scripts:
+    if args.structure and args.whois:
         domain_scan(args.url)
-    elif args.index:
-        print_index_html(args.url)
-    elif args.scripts:
-        print_scripts(args.url)
+    elif args.structure:
+        check_website_structure(args.url)
+    elif args.whois:
+        domain = args.url.split("//")[-1]
+        get_whois_info(domain)
     else:
         parser.print_help()
 
