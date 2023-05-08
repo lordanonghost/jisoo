@@ -50,7 +50,8 @@ def parse_arguments():
 args = parse_arguments()
 website_url = args.url
 get_website_info(website_url)
-if name == 'main':
+# more function
+if __name__ == '__main__':
     args = parse_arguments()
     website_url = args.url
     get_website_info(website_url)
