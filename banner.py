@@ -1,75 +1,56 @@
-import argparse
 import requests
-import ssl
-import platform
-import whois
-
-
-def get_whois_info(domain):
+from bs4 import BeautifulSoup
+import argparse
+def get_website_info(url):
     try:
-        w = whois.whois(domain)
+        # Send a GET request to fetch the HTML content of the website
+        response = requests.get(url)
+        if response.status_code == 200:
+            # Create a BeautifulSoup object to parse the HTML content
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-        print("WHOIS Information:")
-        print(f"Domain Name: {w.domain_name}")
-        print(f"Registrar: {w.registrar}")
-        print(f"Creation Date: {w.creation_date}")
-        print(f"Expiration Date: {w.expiration_date}")
-        print(f"Name Servers: {w.name_servers}")
-    except ImportError:
-        print("Please install the 'python-whois' library to retrieve WHOIS information.")
+            # Extract the website title
+            website_title = soup.title.string.strip()
 
+            # Extract the website description
+            website_description = soup.find('meta', attrs={'name': 'description'})
+            if website_description:
+                website_description = website_description.get('content').strip()
 
-def get_ssl_certificate_info(url):
-    try:
-        cert = ssl.get_server_certificate((url, 443))
-        x509 = ssl.load_certificate(ssl.PEM, cert)
+            # Extract the website keywords
+            website_keywords = soup.find('meta', attrs={'name': 'keywords'})
+            if website_keywords:
+                website_keywords = website_keywords.get('content').strip()
 
-        print("SSL Certificate Information:")
-        print(f"Issuer: {x509.get_issuer()}")
-        print(f"Subject: {x509.get_subject()}")
-        print(f"Expiration Date: {x509.get_notAfter()}")
-    except ssl.SSLError:
-        print("SSL Certificate Error")
+            # Extract the website headings (h1 to h6)
+            website_headings = [heading.text.strip() for heading in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
 
+            # Extract the website links
+            website_links = [link.get('href') for link in soup.find_all('a') if link.get('href')]
 
-def detect_os_versions():
-    print("Operating System Versions:")
-    print(f"Platform: {platform.platform()}")
-    print(f"OS Release: {platform.release()}")
-    print(f"OS Version: {platform.version()}")
+            # Extract the website images
+            website_images = [image.get('src') for image in soup.find_all('img') if image.get('src')]
 
-
-def print_index_html(url):
-    response = requests.get(url)
-    html_content = response.text
-
-    print("Index.html Content:")
-    print(html_content)
-
-
-def domain_scan(url):
-    print(f"Scanning URL: {url}")
-    get_whois_info(url)
-    get_ssl_certificate_info(url)
-    detect_os_versions()
-    print_index_html(url)
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Website Domain Scan")
-    parser.add_argument("url", help="URL of the website to scan")
-    parser.add_argument("-w", "--whois", action="store_true", help="Get WHOIS information")
-    parser.add_argument("-s", "--ssl", action="store_true", help="Get SSL certificate information")
-    parser.add_argument("-o", "--os", action="store_true", help="Detect OS versions")
-    parser.add_argument("-i", "--index", action="store_true", help="Analyze index.html content")
-
-    args = parser.parse_args()
-
-    if args.whois or args.ssl or args.os or args.index:
-        domain_scan(args.url)
-    else:
-        parser.print_help()
-
-# main function
-if __name__ == "__main__":
-    main()
+            # Print the extracted information
+            print(f"Website URL: {url}")
+            print(f"Website Title: {website_title}")
+            print(f"Website Description: {website_description}")
+            print(f"Website Keywords: {website_keywords}")
+            print(f"Website Headings: {website_headings}")
+            print(f"Website Links: {website_links}")
+            print(f"Website Images: {website_images}")
+        else:
+            print(f"Failed to fetch the website content. Status code: {response.status_code}")
+    except requests.exceptions.RequestException as error:
+        print(f"An error occurred while fetching the website: {error}")
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Website Information Tool')
+    parser.add_argument('url', help='URL of the website to retrieve information from')
+    return parser.parse_args()
+args = parse_arguments()
+website_url = args.url
+get_website_info(website_url)
+if name == 'main':
+    args = parse_arguments()
+    website_url = args.url
+    get_website_info(website_url)
