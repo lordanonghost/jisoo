@@ -1,5 +1,3 @@
 argparse
 requests
-python-whois
-ssl
-platform
+BeautifulSoup4
